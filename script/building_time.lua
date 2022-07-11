@@ -78,7 +78,7 @@ end
 local ammo_name = "building-time"
 local get_build_duration = function(health, entity)
   local modifier = 1 / (1 + entity.force.get_ammo_damage_modifier(ammo_name))
-  return (ceil(modifier * (health / shared.repair_rate)) * 60) + 15
+  return (ceil(modifier * (health / shared.repair_rate)) * 60)
 end
 
 local ignore_types =
@@ -121,17 +121,18 @@ local on_built_entity = function(event)
   script.register_on_entity_destroyed(entity)
   local health = entity.prototype.max_health
   if not (health and health > 0) then return end
-
+  local missed_health = health - entity.health
+  health = entity.health
   make_turret(entity, unit_number)
   make_repair_blocker(entity, unit_number)
 
   entity.health = 0.1
   local duration = get_build_duration(health, entity)
-  add_building_finished(event.tick + duration, entity, unit_number)
+  add_building_finished(event.tick + duration + 1, entity, unit_number)
   if not script_data.restore_health then
     script_data.restore_health = {}
   end
-  script_data.restore_health[unit_number] = {event.tick + duration, 1 / (duration - 15)}
+  script_data.restore_health[unit_number] = {event.tick + duration, 1 / duration, missed_health}
   if not entity.active then
     script_data.ignore_reactivation[unit_number] = true
   else
@@ -176,7 +177,7 @@ local destroy_fake_roboport = function(unit_number)
   end
 end
 
-local reactivate_entity = function(unit_number, entity)
+local reactivate_entity = function(unit_number, entity, tick)
 
   local ignore = script_data.ignore_reactivation[unit_number]
   script_data.ignore_reactivation[unit_number] = nil
@@ -184,7 +185,18 @@ local reactivate_entity = function(unit_number, entity)
   if ignore then return end
 
   if (entity and entity.valid) then
-    entity.active = true
+    if not script_data.restore_health or not script_data.restore_health[unit_number] then entity.active = true
+    else
+      local h = script_data.restore_health[unit_number]
+      local missed_health_at_build = h[3]
+      if missed_health_at_build and missed_health_at_build > 0 then
+        local duration = get_build_duration(missed_health_at_build, entity)
+        add_building_finished(tick + duration + 1, entity, unit_number)
+        h[3] = 0
+      else
+        entity.active = true
+      end
+    end
   end
 
 end
@@ -195,7 +207,7 @@ local on_tick = function(event)
   if not buildings then return end
 
   for unit_number, entity in pairs (buildings) do
-    reactivate_entity(unit_number, entity)
+    reactivate_entity(unit_number, entity, tick)
     destroy_turret(unit_number)
     destroy_repair_blocker(unit_number)
     destroy_fake_roboport(unit_number)
@@ -214,7 +226,11 @@ end
 
 local fix_buffer = function(event, unit_num)
   local buffer = event.buffer
-  if not buffer or (not script_data.restore_health) then return end
+  if not script_data.restore_health then return end
+  if not buffer then
+    script_data.restore_health[unit_num] = nil
+    return
+  end
   local h = script_data.restore_health[unit_num]
   if not h then return end
   local time_passed = h[1] - event.tick
@@ -246,6 +262,7 @@ end
 local on_entity_destroyed = function(event)
   if event.unit_number then
     entity_removed(event.unit_number)
+    if script_data.restore_health then script_data.restore_health[event.unit_number] = nil end
   end
 end
 
