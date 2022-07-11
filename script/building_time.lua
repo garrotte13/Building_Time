@@ -215,7 +215,7 @@ local fix_buffer = function(event)
   for k = 1, #buffer do
     local stack = buffer[k]
     if stack and stack.valid and stack.valid_for_read then
-      stack.health = 1
+      stack.health = 1                                -- ISSUE IS HERE
     end
   end
 

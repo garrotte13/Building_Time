@@ -339,7 +339,7 @@ local repair_block_roboport =
   -- per one charge slot
   charging_energy = "1000kW",
   logistics_radius = 0,
-  construction_radius = 1,
+  construction_radius = 0.3,
   charge_approach_distance = 0,
   robot_slots_count = 0,
   material_slots_count = 0,
