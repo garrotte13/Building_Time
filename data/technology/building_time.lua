@@ -41,11 +41,18 @@ for k, ingredients in pairs (levels) do
     name = name.."-"..k,
     localised_name = {name},
     type = "technology",
-    icons =
+    icons = -- util.technology_icon_constant_speed("__base__/graphics/icons/repair-pack.png")
     {
       {
-        icon = "__base__/graphics/icons/repair-pack.png",
-        icon_size = 64
+        icon = "__Building_Time__/data/technology/iron-pickaxe.png",
+        icon_size = 256, icon_mipmaps = 4
+      },
+      {
+        icon = "__core__/graphics/icons/technology/constants/constant-speed.png",
+        icon_size = 128,
+        icon_mipmaps = 3,
+        shift = {-60, 100},
+        --scale = 0.25
       }
     },
     upgrade = true,
