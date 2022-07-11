@@ -7,7 +7,8 @@ local script_data =
   repair_blockers = {},
   fake_roboports = {},
   ignore_reactivation = {},
-  unit_map = {}
+  unit_map = {},
+  restore_health = {}
 }
 
 local insert = table.insert
@@ -127,7 +128,10 @@ local on_built_entity = function(event)
   entity.health = 0.1
   local duration = get_build_duration(health, entity)
   add_building_finished(event.tick + duration, entity, unit_number)
-
+  if not script_data.restore_health then
+    script_data.restore_health = {}
+  end
+  script_data.restore_health[unit_number] = {event.tick + duration, 1 / (duration - 15)}
   if not entity.active then
     script_data.ignore_reactivation[unit_number] = true
   else
@@ -208,17 +212,23 @@ local entity_removed = function(unit_number)
   script_data.ignore_reactivation[unit_number] = nil
 end
 
-local fix_buffer = function(event)
+local fix_buffer = function(event, unit_num)
   local buffer = event.buffer
-  if not buffer then return end
-
-  for k = 1, #buffer do
-    local stack = buffer[k]
-    if stack and stack.valid and stack.valid_for_read then
-      stack.health = 1                                -- ISSUE IS HERE
+  if not buffer or (not script_data.restore_health) then return end
+  local h = script_data.restore_health[unit_num]
+  if not h then return end
+  local time_passed = h[1] - event.tick
+  if time_passed > 0 then
+    local heal_it = (h[2] * time_passed)
+    for k = 1, #buffer do
+      local stack = buffer[k]
+      if stack and stack.valid and stack.valid_for_read then
+        local health_part = heal_it + stack.health
+        if health_part > 1 then stack.health = 1 else stack.health = health_part end
+      end
     end
   end
-
+  script_data.restore_health[unit_num] = nil
 end
 
 local on_entity_removed = function(event)
@@ -229,7 +239,7 @@ local on_entity_removed = function(event)
   if not unit_number then return end
 
   entity_removed(unit_number)
-  fix_buffer(event)
+  fix_buffer(event, unit_number)
 
 end
 
