@@ -113,7 +113,7 @@ local on_built_entity = function(event)
   local entity = event.created_entity or event.entity
   if not (entity and entity.valid) then return end
 
-  if ignore_types[entity.type] then return end
+  if ignore_types[entity.type] or event.vehicle_unloaded then return end
 
   local unit_number = entity.unit_number
   if not unit_number then return end
