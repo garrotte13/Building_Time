@@ -35,7 +35,7 @@ local make_turret = function(entity, unit_number)
   turret.destructible = false
   script_data.building_turrets[unit_number] = turret
   script_data.unit_map[turret.unit_number] = entity
-  turret.set_command
+  turret.commandable.set_command
   {
     type = defines.command.attack,
     target = entity,
@@ -55,7 +55,6 @@ local make_repair_blocker = function(entity, unit_number)
   if repair_inventory then
     repair_inventory.insert("repair-pack")
   end
-
   blocker.destructible = false
   blocker.active = false
 
@@ -118,8 +117,8 @@ local on_built_entity = function(event)
   local unit_number = entity.unit_number
   if not unit_number then return end
 
-  script.register_on_entity_destroyed(entity)
-  local health = entity.prototype.max_health
+  script.register_on_object_destroyed(entity)
+  local health = entity.prototype.get_max_health()
   if not (health and health > 0) then return end
   local missed_health = health - entity.health
   health = entity.health
@@ -259,7 +258,7 @@ local on_entity_removed = function(event)
 
 end
 
-local on_entity_destroyed = function(event)
+local on_object_destroyed = function(event)
   if event.unit_number then
     entity_removed(event.unit_number)
     if script_data.restore_health then script_data.restore_health[event.unit_number] = nil end
@@ -292,7 +291,7 @@ lib.events =
   [defines.events.on_entity_died] = on_entity_removed,
   [defines.events.script_raised_destroy] = on_entity_removed,
 
-  [defines.events.on_entity_destroyed] = on_entity_destroyed,
+  [defines.events.on_object_destroyed] = on_object_destroyed,
 
   [defines.events.on_ai_command_completed] = on_ai_command_complete,
 
@@ -300,11 +299,11 @@ lib.events =
 }
 
 lib.on_load = function()
-  script_data = global.building_time or script_data
+  script_data = storage.building_time or script_data
 end
 
 lib.on_init = function()
-  global.building_time = global.building_time or script_data
+  storage.building_time = storage.building_time or script_data
 end
 
 lib.on_configuration_changed = function()

@@ -25,13 +25,13 @@ local levels =
     {"logistic-science-pack", 1},
     {"chemical-science-pack", 1},
     {"utility-science-pack", 1},
-  },
+  }--[[,
   {
     {"automation-science-pack", 1},
     {"logistic-science-pack", 1},
     {"chemical-science-pack", 1},
     {"utility-science-pack", 1},
-  }
+  }]]
 }
 
 for k, ingredients in pairs (levels) do
@@ -39,7 +39,7 @@ for k, ingredients in pairs (levels) do
   local technology =
   {
     name = name.."-"..k,
-    localised_name = {name},
+    --localised_name = {name},
     type = "technology",
     icons = -- util.technology_icon_constant_speed("__base__/graphics/icons/repair-pack.png")
     {
