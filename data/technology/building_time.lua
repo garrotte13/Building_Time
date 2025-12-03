@@ -68,7 +68,7 @@ for k, ingredients in pairs (levels) do
     prerequisites = k > 1 and {name.."-"..k - 1} or {"logistic-science-pack"},
     unit =
     {
-      count = k * 200,
+      count = k * 150,
       ingredients = ingredients,
       time = 30
     },
